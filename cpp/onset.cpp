@@ -7,7 +7,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <exception>
 using namespace std;
 using fft_frame_t = std::array<std::complex<float>,512>;
 using spectrogram_t = std::vector<fft_frame_t>;
@@ -42,8 +42,13 @@ int main()
 {
   /*ifstream infile ("stft.txt");*/
   FILE *fp;
-  fp=fopen("real.txt","r");
-  /*std::string line;*/
+  fp=fopen("stft.txt","r");
+  if (fp==NULL) 
+    { 
+      std::cout<<"Spectrogram file could not be read, check stft.txt exists"<<std::endl;
+      return 0;
+      //throw std::exception();
+    }
   spectrogram_t spec;
   fft_frame_t temp;
   float real, imag;
@@ -66,7 +71,7 @@ int main()
   }
   infile.close();
   }*/
-    
+  if (i!=0) { std::cout<<"Incorrect number of entries, i="<<i<<std::endl;}  
   std::vector<float> o_env = onset_function(spec);
   //std::cout << o_env;
   ofstream outfile ("onset_env.txt");
