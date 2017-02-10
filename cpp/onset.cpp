@@ -3,27 +3,30 @@
 #include <array>
 #include <vector>
 #include <algorithm> 
+#include <iterator>
 #include <fstream>
-#include "strtk.hpp"
-using namespace std
+#include <stdlib.h>
+#include <stdio.h>
+
+using namespace std;
 using fft_frame_t = std::array<std::complex<float>,512>;
 using spectrogram_t = std::vector<fft_frame_t>;
+using pow_frame_t = std::array<float,512>;
+using onset_envelope = std::vector<float>;
 std::vector<float> onset_function(const spectrogram_t& specgram)
 {
-  using pow_frame_t = std::array<float,512>;
-  using onset_envelope = std::vector<float>;
   pow_frame_t past_frame, curr_frame;
   onset_envelope o_env; 
-  int ind = 0;
+  int ind = 0; float val; int i;
   for (frame: specgram) {
     std::transform(frame.begin(), frame.end(), curr_frame.begin(), 
                     [] (std::complex<float> z) {return (std::conj(z)*z).real();});
     if (ind == 0) { goto update;}
-    
-    float val = 0
-    while (int i=0; i<511; i++)
+    val = 0; i=0;
+    while (i<511)
     {
-      val += std::max(0, curr_frame[i]-past_frame[i]);
+      val += std::max(float(0), curr_frame[i]-past_frame[i]);
+      i++;
     } 
     o_env.push_back(val);
 update:    
@@ -37,10 +40,24 @@ update:
 
 int main()
 {
-  ifstream infile ("stft.txt");
-  std::string line;
+  /*ifstream infile ("stft.txt");*/
+  FILE *fp;
+  fp=fopen("real.txt","r");
+  /*std::string line;*/
   spectrogram_t spec;
-  while ( getline (infile,line) )
+  fft_frame_t temp;
+  float real, imag;
+  int i=0;
+  while(fscanf(fp,"%f %f",&real, &imag)!=EOF)
+  {
+    temp[i] = {real,imag};
+    if (i==511)
+    {
+      spec.push_back(temp);
+      i = 0;
+    }
+  }
+  /*while ( getline (infile,line) )
   {
     fft_frame_t temp;
     strtk::parse(line, " ", temp);
@@ -48,8 +65,12 @@ int main()
     cout << line<<temp[0] << '\n';
   }
   infile.close();
-  }
-  
-  ofstream outfile ("onset_env.txt", app);
+  }*/
+    
+  std::vector<float> o_env = onset_function(spec);
+  //std::cout << o_env;
+  ofstream outfile ("onset_env.txt");
+  std::ostream_iterator<float> output_iterator(outfile, "\n");
+  std::copy(o_env.begin(), o_env.end(), output_iterator); 
   outfile.close(); 
  }
