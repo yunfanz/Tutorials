@@ -5,6 +5,7 @@
 #include <omp.h>
 #include <iterator>
 #include <cmath>
+#include <string> 
 #define BINS 200
 #define SM 200
 // Prototype for IsPrime function.
@@ -19,9 +20,9 @@ int main()
 	//Results: Accepts a number and
 	//		  indicates if it is prime.
     using namespace std;
-    int ceiling;
-    cout<<"Enter integer ceiling: "<<endl;
-    cin>>ceiling;
+    int ceiling; int spacing; 
+    cout<<"Enter integer ceiling and prime spacing: "<<endl;
+    cin>>ceiling>>spacing;
     array<int, SM> small_primes;
     int p = 2, i = 0;
     do {
@@ -48,14 +49,28 @@ int main()
         	if (IsPrime(n, small_primes))
         	{
         		p2 = n;
-        		if (p2-p1==2){ hist_count++;}
+        		if (p2-p1==spacing){ hist_count++;}
         		p1 = p2;
         	}
         	n++;
         }
         hist[b] = hist_count;
     }
-    ofstream outfile ("twin_hist.dat");
+    string fname;
+    switch (spacing) {
+        case 2:
+            fname = "twin_hist.dat";
+            break;
+        case 4:
+            fname = "cousin_hist.dat";
+            break;
+        case 6:
+            fname = "sexy_hist.dat";
+            break;
+        default:
+            fname= "hist.dat";
+      }
+    ofstream outfile (fname);
     std::ostream_iterator<int> fout_iterator(outfile, "\n");
     std::copy(hist.begin(), hist.end(), fout_iterator); 
     cout<<"Done!"<<endl;
