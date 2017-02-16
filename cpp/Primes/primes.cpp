@@ -6,8 +6,10 @@
 #include <iterator>
 #include <cmath>
 #define BINS 200
+#define SM 200
 // Prototype for IsPrime function.
-bool IsPrime(int);
+bool IsPrime(long long int, std::array<int, SM>);
+bool is_prime_alg(int);
 
 // main function is always run first in a
 // C++ program.
@@ -20,17 +22,30 @@ int main()
     int ceiling;
     cout<<"Enter integer ceiling: "<<endl;
     cin>>ceiling;
-    int step = ceiling/BINS;
+    array<int, SM> small_primes;
+    int p = 2, i = 0;
+    do {
+        if (is_prime_alg(p)) {
+            small_primes[i] = p;
+            i++;
+        }
+        p++;
+    } while (i<SM);
+    // std::ostream_iterator<int> cout_iterator(cout, " ");
+    // std::copy(small_primes.begin(), small_primes.end(), cout_iterator); 
+
+    long long int step = ceiling/BINS;
     array<int,BINS> hist; int hist_count;
+
     #pragma omp parallel for private(hist_count)
     for (int b=0; b<BINS; ++b)
     {
     	int tid = omp_get_thread_num();
-        int n = b*step, p1=2, p2=3;
+        long long int n = b*step, p1=2, p2=3;
         hist_count=0;
         while (n<(b+1)*step)
         {
-        	if (IsPrime(n))
+        	if (IsPrime(n, small_primes))
         	{
         		p2 = n;
         		if (p2-p1==2){ hist_count++;}
@@ -41,40 +56,41 @@ int main()
         hist[b] = hist_count;
     }
     ofstream outfile ("twin_hist.dat");
-    std::ostream_iterator<int> output_iterator(outfile, "\n");
-    std::copy(hist.begin(), hist.end(), output_iterator); 
+    std::ostream_iterator<int> fout_iterator(outfile, "\n");
+    std::copy(hist.begin(), hist.end(), fout_iterator); 
     cout<<"Done!"<<endl;
     return 0;
 }
-// bool is_prime(int n)
-// {
-//   if (n == 2 || n == 3) {return true}
-//   if n < 2 or n%2 == 0) {return false}
-//   if n < 9: return True
-//   if n%3 == 0: return False
-//   r = int(n**0.5)
-//   f = 5
-//   while f <= r:
-//     #print '\t',f
-//     if n%f == 0: return False
-//     if n%(f+2) == 0: return False
-//     f +=6
-//   return true;
-// }
-bool IsPrime(int number)
+
+bool is_prime_alg(int n)
+{
+  if (n == 2 || n == 3) {return true;}
+  if (n < 2 || n%2 == 0) {return false;}
+  if (n < 9) {return true;}
+  if (n%3 == 0) {return false;}
+  int f = 5;
+  while (f*f <= n) {
+    //print '\t',f
+    if (n%f == 0) {return false;}
+    if (n%(f+2) == 0) {return false;}
+    f +=6;
+    }
+  return true;
+}
+
+bool IsPrime(long long int number, std::array<int, SM> small_primes)
 {	// Given:   num an integer > 1
 	// Returns: true if num is prime
 	// 			false otherwise.
 	
-	int i;
-	if (number<2) {return false;}
-	for (i=2; i<number; i++)
+	for (int p : small_primes)
 	{
-		if (number % i == 0)
+        if (p == number) { return false; }
+		if (number % p == 0)
 		{
 			return false;
 		}
 	}
 	
-	return true;	
+	return is_prime_alg(number);	
 }
